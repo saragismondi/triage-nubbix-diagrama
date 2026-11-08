@@ -1,0 +1,183 @@
+<title>Triage Nubbix por dentro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: el recorrido de un ticket por un riel vertical; cada parada se abre para explicar y mostrar su código; los desvíos salen hacia el costado. */
+:root {
+  --bg: #F4F6F2; --surface: #FFFFFF; --ink: #17201C; --muted: #56625C; --line: #D5DCD6;
+  --det: #2D5B88; --det-bg: #E7EEF6; --ia: #A84B16; --ia-bg: #F8EADF; --dato: #5A6828; --dato-bg: #EEF1E0;
+  --risk-bg: #FBEEE6; --risk-ink: #8A3A10; --ok-bg: #E5F0EA; --ok-ink: #1C5A45; --code-bg: #F0F2EE;
+  --accent: #1C6B57;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #101513; --surface: #171E1B; --ink: #E4EBE7; --muted: #9AA8A1; --line: #2A3530;
+  --det: #86B6E6; --det-bg: #18283A; --ia: #F2985F; --ia-bg: #33200F; --dato: #B9C76F; --dato-bg: #252B13;
+  --risk-bg: #2C1C12; --risk-ink: #F4B08A; --ok-bg: #13261E; --ok-ink: #8FD7BC; --code-bg: #121816;
+  --accent: #5FC4A5; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #101513; --surface: #171E1B; --ink: #E4EBE7; --muted: #9AA8A1; --line: #2A3530;
+  --det: #86B6E6; --det-bg: #18283A; --ia: #F2985F; --ia-bg: #33200F; --dato: #B9C76F; --dato-bg: #252B13;
+  --risk-bg: #2C1C12; --risk-ink: #F4B08A; --ok-bg: #13261E; --ok-ink: #8FD7BC; --code-bg: #121816;
+  --accent: #5FC4A5; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 64px; }
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+h4 { font: 600 0.78rem/1.3 var(--f-body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 6px; }
+p { margin: 0; }
+code { font-family: var(--f-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+header.top { display: grid; gap: 16px; max-width: 70ch; }
+.eyebrow { font: 500 0.8rem var(--f-mono); color: var(--accent); letter-spacing: 0.04em; }
+.lede { font-size: 1.12rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 6px; font-size: 0.92rem; }
+.legend span { display: inline-flex; gap: 8px; align-items: center; }
+
+.chip { font: 600 0.72rem/1 var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; padding: 5px 8px; border-radius: 999px; white-space: nowrap; }
+.c-det { color: var(--det); background: var(--det-bg); }
+.c-ia { color: var(--ia); background: var(--ia-bg); }
+.c-dato { color: var(--dato); background: var(--dato-bg); }
+
+section { display: grid; gap: 20px; }
+.sec-head { display: grid; gap: 6px; max-width: 70ch; }
+.sec-head p { color: var(--muted); }
+
+.map { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; overflow-x: auto; }
+.map pre.mermaid { margin: 0; display: flex; justify-content: center; background: transparent; }
+
+ol.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; }
+.rail { position: relative; display: flex; justify-content: center; }
+.rail::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; transform: translateX(-50%); background: var(--line); }
+.step:first-child .rail::before { top: 22px; }
+.step:last-child .rail::before { bottom: auto; height: 22px; }
+.num { position: relative; z-index: 1; margin-top: 12px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 0.9rem var(--f-mono); background: var(--surface); border: 2px solid var(--line); font-variant-numeric: tabular-nums; }
+.k-det .num { border-color: var(--det); color: var(--det); }
+.k-ia .num { border-color: var(--ia); color: var(--ia); }
+.k-dato .num { border-color: var(--dato); color: var(--dato); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 14px; min-width: 0; }
+.k-ia .card { border-left: 3px solid var(--ia); }
+.card > summary { list-style: none; cursor: pointer; padding: 14px 18px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; align-items: baseline; }
+.card > summary::-webkit-details-marker { display: none; }
+.stitle { font: 700 1.12rem/1.3 var(--f-display); }
+.sshort { grid-column: 2; color: var(--muted); }
+.branch { grid-column: 2; margin-top: 4px; font-size: 0.9rem; color: var(--risk-ink); display: flex; gap: 6px; }
+.branch .arrow { font-family: var(--f-mono); }
+.open-hint { grid-column: 2; margin-top: 6px; font-size: 0.85rem; color: var(--accent); font-weight: 600; }
+.open-hint::after { content: " ↓"; }
+.card[open] .open-hint::after { content: " ↑"; }
+.card[open] .open-hint { color: var(--muted); }
+.body { padding: 4px 18px 18px; display: grid; gap: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; }
+.col { display: grid; gap: 14px; align-content: start; min-width: 0; }
+dl.terms { margin: 0; display: grid; gap: 10px; }
+.term { display: grid; gap: 2px; }
+.term dt { font-weight: 600; }
+.term dd { margin: 0; color: var(--muted); }
+.box { border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.box.risk { background: var(--risk-bg); }
+.box.risk h4 { color: var(--risk-ink); }
+.box.control { background: var(--ok-bg); }
+.box.control h4 { color: var(--ok-ink); }
+.box.measured { border: 1px dashed var(--line); }
+
+.codewrap > summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+figure.code { margin: 12px 0 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-width: 0; }
+figure.code figcaption { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; padding: 8px 12px; background: var(--code-bg); border-bottom: 1px solid var(--line); font-size: 0.82rem; }
+.path { font-family: var(--f-mono); font-weight: 500; }
+.lines { color: var(--muted); font-variant-numeric: tabular-nums; }
+figure.code a { margin-left: auto; }
+pre { margin: 0; overflow-x: auto; }
+figure.code pre, .run pre { padding: 12px 14px; font: 0.82rem/1.55 var(--f-mono); background: var(--surface); }
+figure.code pre code, .run pre code { background: none; padding: 0; font-size: inherit; }
+
+.runs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.run { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 0 0; display: grid; gap: 8px; min-width: 0; }
+.run h4 { padding: 0 14px; }
+.run pre { border-top: 1px solid var(--line); background: var(--code-bg); }
+
+ul.heur { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px 28px; }
+ul.heur li { display: grid; gap: 4px; padding-top: 12px; border-top: 2px solid var(--accent); }
+ul.heur span { color: var(--muted); }
+
+.gloss { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px 28px; margin: 0; }
+footer { color: var(--muted); font-size: 0.88rem; max-width: 70ch; }
+
+@media (max-width: 720px) {
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .step { grid-template-columns: 32px minmax(0, 1fr); gap: 10px; }
+  .num { width: 28px; height: 28px; font-size: 0.8rem; }
+  .card > summary { grid-template-columns: minmax(0, 1fr); }
+  .sshort, .branch, .open-hint { grid-column: 1; }
+  .chip { justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">saragismondi/pi-m1-ia-engineer · Proyecto Integrador M1 · Henry</p>
+    <h1>Triage Nubbix por dentro</h1>
+    <p class="lede">Qué le pasa a un ticket de soporte desde que el cliente lo escribe hasta que un agente humano recibe la propuesta. Cada paso dice qué hace en simple, qué palabras técnicas usa, qué puede salir mal con la IA, quién lo controla y cuál es su código real.</p>
+    <div class="legend" aria-label="Tipos de paso">
+      <span><span class="chip c-det">Código fijo</span> siempre hace lo mismo; se testea exacto</span>
+      <span><span class="chip c-ia">IA</span> decide un modelo; puede variar y equivocarse</span>
+      <span><span class="chip c-dato">Datos</span> guarda o lee información</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="h-map">
+    <div class="sec-head">
+      <h2 id="h-map">El mapa completo</h2>
+      <p>Las flechas con texto son los desvíos: cada vez que algo no está bien, el ticket sale del camino y va a una persona o termina en un error. Nunca sale algo dudoso al cliente.</p>
+    </div>
+    <div class="map"><pre class="mermaid">{{MERMAID}}</pre></div>
+  </section>
+
+  <section aria-labelledby="h-steps">
+    <div class="sec-head">
+      <h2 id="h-steps">Paso por paso</h2>
+      <p>{{NSTEPS}} paradas, en el orden en que las recorre <code>triage()</code> en <code>src/service.py</code>. Tocá cada una para abrir la explicación; adentro está el código real, extraído del repositorio.</p>
+    </div>
+    <ol class="flow">{{STEPS}}</ol>
+  </section>
+
+  <section aria-labelledby="h-heur">
+    <div class="sec-head">
+      <h2 id="h-heur">Cómo vigilar lo que hace la IA</h2>
+      <p>Las ideas que atraviesan todo el proyecto. Sirven para cualquier servicio con IA, esté escrito en Python, TypeScript o lo que sea.</p>
+    </div>
+    <ul class="heur">{{HEUR}}</ul>
+  </section>
+
+  <section aria-labelledby="h-run">
+    <div class="sec-head">
+      <h2 id="h-run">Cómo correrlo</h2>
+      <p>Desde la carpeta del proyecto. Los comandos que usan Anthropic gastan créditos; los tests no llaman a ninguna IA.</p>
+    </div>
+    <div class="runs">{{RUN}}</div>
+  </section>
+
+  <section aria-labelledby="h-gloss">
+    <div class="sec-head">
+      <h2 id="h-gloss">Glosario</h2>
+      <p>Los {{NTERMS}} términos técnicos de la página, juntos.</p>
+    </div>
+    <dl class="gloss">{{GLOSS}}</dl>
+  </section>
+
+  <footer>Fuentes: el código del repositorio (commit 0d78a0a), <code>data/metrics.jsonl</code> (1.184 llamadas a IA del 07/11/2026), <code>evals/results/</code> y el README. Los 7 trucos que pasan los patrones se probaron el 07/11/2026 con <code>check_input()</code>, sin llamar a ninguna IA.</footer>
+</div>
