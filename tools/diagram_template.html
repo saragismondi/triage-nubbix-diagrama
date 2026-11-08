@@ -4,12 +4,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: el recorrido de un ticket por un riel vertical; cada parada se abre para explicar y mostrar su código; los desvíos salen hacia el costado. */
+/* Layout: el recorrido de un ticket por un riel vertical; cada parada se abre para explicar y mostrar su código.
+   "Seguí un ticket" pinta sobre el mismo riel por dónde pasa un ticket real y dónde sale. */
 :root {
   --bg: #F4F6F2; --surface: #FFFFFF; --ink: #17201C; --muted: #56625C; --line: #D5DCD6;
   --det: #2D5B88; --det-bg: #E7EEF6; --ia: #A84B16; --ia-bg: #F8EADF; --dato: #5A6828; --dato-bg: #EEF1E0;
   --risk-bg: #FBEEE6; --risk-ink: #8A3A10; --ok-bg: #E5F0EA; --ok-ink: #1C5A45; --code-bg: #F0F2EE;
-  --accent: #1C6B57;
+  --accent: #1C6B57; --exit: #B3261E; --exit-bg: #FBE7E5;
   --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -18,31 +19,34 @@
   --bg: #101513; --surface: #171E1B; --ink: #E4EBE7; --muted: #9AA8A1; --line: #2A3530;
   --det: #86B6E6; --det-bg: #18283A; --ia: #F2985F; --ia-bg: #33200F; --dato: #B9C76F; --dato-bg: #252B13;
   --risk-bg: #2C1C12; --risk-ink: #F4B08A; --ok-bg: #13261E; --ok-ink: #8FD7BC; --code-bg: #121816;
-  --accent: #5FC4A5; color-scheme: dark; } }
+  --accent: #5FC4A5; --exit: #FF8A80; --exit-bg: #3A1614; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #101513; --surface: #171E1B; --ink: #E4EBE7; --muted: #9AA8A1; --line: #2A3530;
   --det: #86B6E6; --det-bg: #18283A; --ia: #F2985F; --ia-bg: #33200F; --dato: #B9C76F; --dato-bg: #252B13;
   --risk-bg: #2C1C12; --risk-ink: #F4B08A; --ok-bg: #13261E; --ok-ink: #8FD7BC; --code-bg: #121816;
-  --accent: #5FC4A5; color-scheme: dark; }
+  --accent: #5FC4A5; --exit: #FF8A80; --exit-bg: #3A1614; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 64px; }
-.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 56px; }
+.wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 64px; }
 h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
 h1 { font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 700; letter-spacing: -0.02em; }
 h2 { font-size: 1.6rem; font-weight: 700; }
+h3 { font-size: 1.12rem; font-weight: 700; }
 h4 { font: 600 0.78rem/1.3 var(--f-body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 6px; }
 p { margin: 0; }
 code { font-family: var(--f-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
 a { color: var(--accent); }
-a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 
-header.top { display: grid; gap: 16px; max-width: 70ch; }
+header.top { display: grid; gap: 16px; max-width: 72ch; }
 .eyebrow { font: 500 0.8rem var(--f-mono); color: var(--accent); letter-spacing: 0.04em; }
 .lede { font-size: 1.12rem; color: var(--muted); }
 .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 6px; font-size: 0.92rem; }
 .legend span { display: inline-flex; gap: 8px; align-items: center; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.92rem; }
+nav.toc a { text-decoration: none; border-bottom: 1px solid var(--line); }
 
 .chip { font: 600 0.72rem/1 var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; padding: 5px 8px; border-radius: 999px; white-space: nowrap; }
 .c-det { color: var(--det); background: var(--det-bg); }
@@ -50,14 +54,31 @@ header.top { display: grid; gap: 16px; max-width: 70ch; }
 .c-dato { color: var(--dato); background: var(--dato-bg); }
 
 section { display: grid; gap: 20px; }
-.sec-head { display: grid; gap: 6px; max-width: 70ch; }
+.sec-head { display: grid; gap: 6px; max-width: 72ch; }
 .sec-head p { color: var(--muted); }
 
 .map { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; overflow-x: auto; }
 .map pre.mermaid { margin: 0; display: flex; justify-content: center; background: transparent; }
 
+/* Seguí un ticket */
+.tracer { display: grid; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.tbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.tbtn { font: 600 0.88rem var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.tbtn:hover { border-color: var(--accent); }
+.tbtn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.tbtn.clear { color: var(--muted); }
+.tk-ataque::before { content: "⚑ "; color: var(--exit); }
+.tbtn[aria-pressed="true"].tk-ataque::before { color: inherit; }
+.tpanel { display: grid; gap: 10px; }
+.tpanel[hidden] { display: none; }
+.tticket { font: 0.95rem/1.5 var(--f-mono); background: var(--code-bg); border-radius: 8px; padding: 10px 12px; overflow-wrap: anywhere; }
+.tfacts { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 0.92rem; }
+.tfacts b { font-weight: 600; }
+.tsource { font-size: 0.85rem; color: var(--muted); }
+.thint { color: var(--muted); font-size: 0.92rem; }
+
 ol.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
-.step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; }
+.step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; transition: opacity .2s; }
 .rail { position: relative; display: flex; justify-content: center; }
 .rail::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; transform: translateX(-50%); background: var(--line); }
 .step:first-child .rail::before { top: 22px; }
@@ -67,6 +88,14 @@ ol.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .k-det .num { border-color: var(--det); color: var(--det); }
 .k-ia .num { border-color: var(--ia); color: var(--ia); }
 .k-dato .num { border-color: var(--dato); color: var(--dato); }
+.step.t-pass .rail::before { background: var(--accent); }
+.step.t-pass .num { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.step.t-exit .num { background: var(--exit); border-color: var(--exit); color: var(--surface); }
+.step.t-exit .card { border-color: var(--exit); box-shadow: 0 0 0 1px var(--exit); }
+.step.t-skip { opacity: .38; }
+.trace-note { grid-column: 2; margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--ok-bg); color: var(--ok-ink); font-size: 0.92rem; }
+.t-exit .trace-note { background: var(--exit-bg); color: var(--exit); font-weight: 600; }
+.t-skip .trace-note { background: transparent; color: var(--muted); padding: 0; }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 14px; min-width: 0; }
 .k-ia .card { border-left: 3px solid var(--ia); }
@@ -74,25 +103,28 @@ ol.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .card > summary::-webkit-details-marker { display: none; }
 .stitle { font: 700 1.12rem/1.3 var(--f-display); }
 .sshort { grid-column: 2; color: var(--muted); }
-.branch { grid-column: 2; margin-top: 4px; font-size: 0.9rem; color: var(--risk-ink); display: flex; gap: 6px; }
-.branch .arrow { font-family: var(--f-mono); }
+.branch { grid-column: 2; margin-top: 4px; font-size: 0.9rem; color: var(--risk-ink); }
 .open-hint { grid-column: 2; margin-top: 6px; font-size: 0.85rem; color: var(--accent); font-weight: 600; }
 .open-hint::after { content: " ↓"; }
 .card[open] .open-hint::after { content: " ↑"; }
 .card[open] .open-hint { color: var(--muted); }
-.body { padding: 4px 18px 18px; display: grid; gap: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+/* minmax(0, 1fr): sin esto, una línea larga de código abierto estira toda la tarjeta en pantallas chicas. */
+.body { padding: 16px 18px 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; border-top: 1px solid var(--line); }
+.body > *, .codewrap { min-width: 0; }
 .cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; }
 .col { display: grid; gap: 14px; align-content: start; min-width: 0; }
 dl.terms { margin: 0; display: grid; gap: 10px; }
 .term { display: grid; gap: 2px; }
 .term dt { font-weight: 600; }
 .term dd { margin: 0; color: var(--muted); }
-.box { border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+.tlink { color: var(--ink); text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+.box { border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
 .box.risk { background: var(--risk-bg); }
 .box.risk h4 { color: var(--risk-ink); }
 .box.control { background: var(--ok-bg); }
 .box.control h4 { color: var(--ok-ink); }
 .box.measured { border: 1px dashed var(--line); }
+.tests { font-size: 0.88rem; color: var(--ok-ink); }
 
 .codewrap > summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 figure.code { margin: 12px 0 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-width: 0; }
@@ -104,6 +136,31 @@ pre { margin: 0; overflow-x: auto; }
 figure.code pre, .run pre { padding: 12px 14px; font: 0.82rem/1.55 var(--f-mono); background: var(--surface); }
 figure.code pre code, .run pre code { background: none; padding: 0; font-size: inherit; }
 
+/* Capas */
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; min-width: 640px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 0.75rem var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+.num-cell { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { color: var(--muted); font-size: 0.92rem; max-width: 72ch; }
+
+/* Lecciones */
+.lessons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.lesson { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.lesson dl { margin: 0; display: grid; gap: 8px; }
+.lesson dt { font: 600 0.72rem var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.lesson dd { margin: 0; }
+.moral { font-weight: 600; color: var(--accent); border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Cómo se prueba */
+ol.ladder { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: lad; }
+ol.ladder li { counter-increment: lad; display: grid; gap: 4px; padding: 12px 16px 12px 52px; position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+ol.ladder li::before { content: counter(lad); position: absolute; left: 14px; top: 12px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 0.82rem var(--f-mono); background: var(--det-bg); color: var(--det); }
+.tl-head { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+.tl-head span { font-size: 0.85rem; color: var(--muted); font-family: var(--f-mono); }
+ol.ladder p { color: var(--muted); }
+
 .runs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
 .run { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 0 0; display: grid; gap: 8px; min-width: 0; }
 .run h4 { padding: 0 14px; }
@@ -113,49 +170,96 @@ ul.heur { list-style: none; margin: 0; padding: 0; display: grid; grid-template-
 ul.heur li { display: grid; gap: 4px; padding-top: 12px; border-top: 2px solid var(--accent); }
 ul.heur span { color: var(--muted); }
 
-.gloss { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px 28px; margin: 0; }
-footer { color: var(--muted); font-size: 0.88rem; max-width: 70ch; }
+.ggroups { display: grid; gap: 28px; }
+.ggroup { display: grid; gap: 12px; }
+.gloss { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px 28px; margin: 0; }
+.gloss .term { scroll-margin-top: 24px; padding: 6px 8px; margin: -6px -8px; border-radius: 8px; }
+.gloss .term:target { background: var(--ok-bg); }
+.ex { display: block; margin-top: 4px; font-size: 0.88rem; color: var(--accent); }
+footer { color: var(--muted); font-size: 0.88rem; max-width: 72ch; display: grid; gap: 6px; }
 
 @media (max-width: 720px) {
   .cols { grid-template-columns: minmax(0, 1fr); }
   .step { grid-template-columns: 32px minmax(0, 1fr); gap: 10px; }
   .num { width: 28px; height: 28px; font-size: 0.8rem; }
   .card > summary { grid-template-columns: minmax(0, 1fr); }
-  .sshort, .branch, .open-hint { grid-column: 1; }
+  .sshort, .branch, .open-hint, .trace-note { grid-column: 1; }
   .chip { justify-self: start; }
 }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 
 <div class="wrap">
   <header class="top">
     <p class="eyebrow">saragismondi/pi-m1-ia-engineer · Proyecto Integrador M1 · Henry</p>
     <h1>Triage Nubbix por dentro</h1>
-    <p class="lede">Qué le pasa a un ticket de soporte desde que el cliente lo escribe hasta que un agente humano recibe la propuesta. Cada paso dice qué hace en simple, qué palabras técnicas usa, qué puede salir mal con la IA, quién lo controla y cuál es su código real.</p>
+    <p class="lede">Qué le pasa a un ticket de soporte desde que el cliente lo escribe hasta que un agente humano recibe la propuesta. Cada parada dice qué hace en simple, qué palabras técnicas usa, qué puede salir mal con la IA, quién lo controla y cuál es su código real. La idea es entender el proceso para poder vigilar lo que una IA hace sola.</p>
     <div class="legend" aria-label="Tipos de paso">
       <span><span class="chip c-det">Código fijo</span> siempre hace lo mismo; se testea exacto</span>
       <span><span class="chip c-ia">IA</span> decide un modelo; puede variar y equivocarse</span>
       <span><span class="chip c-dato">Datos</span> guarda o lee información</span>
     </div>
+    <nav class="toc" aria-label="Secciones">
+      <a href="#mapa">El mapa</a><a href="#paso-a-paso">Seguí un ticket</a><a href="#capas">Qué frena cada capa</a>
+      <a href="#lecciones">Lo que aprendimos</a><a href="#pruebas">Cómo se prueba</a><a href="#vigilar">Cómo vigilar a la IA</a>
+      <a href="#correrlo">Cómo correrlo</a><a href="#glosario">Glosario</a>
+    </nav>
   </header>
 
-  <section aria-labelledby="h-map">
+  <section id="mapa" aria-labelledby="h-map">
     <div class="sec-head">
       <h2 id="h-map">El mapa completo</h2>
-      <p>Las flechas con texto son los desvíos: cada vez que algo no está bien, el ticket sale del camino y va a una persona o termina en un error. Nunca sale algo dudoso al cliente.</p>
+      <p>Las flechas con texto son los desvíos: cada vez que algo no está bien, el ticket sale del camino y va a una persona, recibe un texto fijo o termina en un error. Nunca sale algo dudoso al cliente.</p>
     </div>
     <div class="map"><pre class="mermaid">{{MERMAID}}</pre></div>
   </section>
 
-  <section aria-labelledby="h-steps">
+  <section id="paso-a-paso" aria-labelledby="h-steps">
     <div class="sec-head">
-      <h2 id="h-steps">Paso por paso</h2>
-      <p>{{NSTEPS}} paradas, en el orden en que las recorre <code>triage()</code> en <code>src/service.py</code>. Tocá cada una para abrir la explicación; adentro está el código real, extraído del repositorio.</p>
+      <h2 id="h-steps">Seguí un ticket, paso por paso</h2>
+      <p>{{NSTEPS}} paradas, en el orden en que las recorre <code>triage()</code> en <code>src/service.py</code>. Elegí uno de los {{NTRACES}} tickets reales y mirá por dónde pasa (verde), dónde sale (rojo) y qué pasó en cada parada. Tocá una parada para abrir su explicación y su código.</p>
+    </div>
+    <div class="tracer" role="group" aria-label="Elegí un ticket para seguir">
+      <div class="tbtns">{{TRACE_BUTTONS}}<button type="button" class="tbtn clear" id="tclear">Ver sin recorrido</button></div>
+      <p class="thint" id="thint">Elegí un ticket de arriba. Los marcados con ⚑ son ataques.</p>
+      <div class="tpanel" id="tpanel" hidden aria-live="polite">
+        <div class="tticket" id="tticket"></div>
+        <div class="tfacts"><span><b>Resultado:</b> <span id="tresult"></span></span><span><b>Costo:</b> <span id="tcost"></span></span></div>
+        <p class="tsource" id="tsource"></p>
+      </div>
     </div>
     <ol class="flow">{{STEPS}}</ol>
   </section>
 
-  <section aria-labelledby="h-heur">
+  <section id="capas" aria-labelledby="h-layers">
+    <div class="sec-head">
+      <h2 id="h-layers">Qué frena cada capa</h2>
+      <p>Medido con Haiku y el prompt v1 sobre 20 ataques y pruebas manuales del 08/11/2026. Con todas las capas activas, 0 de 20 ataques llegaron al cliente.</p>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Capa</th><th>Tipo</th><th>Qué frenó</th><th>Costo por ticket</th><th>Para qué sirve</th></tr></thead>
+      <tbody>{{LAYERS}}</tbody>
+    </table></div>
+    <p class="note">Las capas de arriba son baratas pero rígidas; las de abajo entienden más pero cuestan o dependen de una persona. Por eso se combinan: la defensa más fuerte es la última fila, porque el servicio nunca ejecuta nada por su cuenta.</p>
+  </section>
+
+  <section id="lecciones" aria-labelledby="h-lessons">
+    <div class="sec-head">
+      <h2 id="h-lessons">Lo que aprendimos rompiendo cosas</h2>
+      <p>Errores reales del proyecto, cómo se encontraron y qué se hizo. Ninguno lo encontró un cliente: los encontraron las métricas, los tests y las pruebas a propósito.</p>
+    </div>
+    <div class="lessons">{{LESSONS}}</div>
+  </section>
+
+  <section id="pruebas" aria-labelledby="h-testing">
+    <div class="sec-head">
+      <h2 id="h-testing">Cómo se prueba</h2>
+      <p>De lo más barato y frecuente a lo más caro y puntual. Lo que se puede probar sin IA se prueba sin IA.</p>
+    </div>
+    <ol class="ladder">{{TESTING}}</ol>
+  </section>
+
+  <section id="vigilar" aria-labelledby="h-heur">
     <div class="sec-head">
       <h2 id="h-heur">Cómo vigilar lo que hace la IA</h2>
       <p>Las ideas que atraviesan todo el proyecto. Sirven para cualquier servicio con IA, esté escrito en Python, TypeScript o lo que sea.</p>
@@ -163,21 +267,63 @@ footer { color: var(--muted); font-size: 0.88rem; max-width: 70ch; }
     <ul class="heur">{{HEUR}}</ul>
   </section>
 
-  <section aria-labelledby="h-run">
+  <section id="correrlo" aria-labelledby="h-run">
     <div class="sec-head">
       <h2 id="h-run">Cómo correrlo</h2>
-      <p>Desde la carpeta del proyecto. Los comandos que usan Anthropic gastan créditos; los tests no llaman a ninguna IA.</p>
+      <p>Desde la carpeta del proyecto. Los comandos que llaman a Anthropic gastan créditos; los tests no llaman a ninguna IA.</p>
     </div>
     <div class="runs">{{RUN}}</div>
   </section>
 
-  <section aria-labelledby="h-gloss">
+  <section id="glosario" aria-labelledby="h-gloss">
     <div class="sec-head">
       <h2 id="h-gloss">Glosario</h2>
-      <p>Los {{NTERMS}} términos técnicos de la página, juntos.</p>
+      <p>{{NTERMS}} términos agrupados por tema, cada uno con un ejemplo de este proyecto. Los términos subrayados en las paradas llevan acá.</p>
     </div>
-    <dl class="gloss">{{GLOSS}}</dl>
+    <div class="ggroups">{{GLOSS}}</div>
   </section>
 
-  <footer>Fuentes: el código del repositorio (commit 0d78a0a), <code>data/metrics.jsonl</code> (1.184 llamadas a IA del 07/11/2026), <code>evals/results/</code> y el README. Los 7 trucos que pasan los patrones se probaron el 07/11/2026 con <code>check_input()</code>, sin llamar a ninguna IA.</footer>
+  <footer>
+    <p>Fuentes: el código del repositorio en el commit <a href="{{SHA_URL}}">{{SHA}}</a>, <code>data/metrics.jsonl</code>, <code>evals/results/</code> y pruebas manuales con Haiku del 08/11/2026. Los pasos deterministas de los recorridos los calcula esta página con las funciones reales del proyecto.</p>
+    <p>Los fragmentos de código se extraen del repositorio automáticamente (<code>tools/build_diagram.py</code>): no hay código copiado a mano.</p>
+  </footer>
 </div>
+
+<script>
+(function () {
+  const TRACES = {{TRACES_JSON}};
+  const steps = Array.from(document.querySelectorAll("li.step"));
+  const buttons = Array.from(document.querySelectorAll(".tbtn[data-trace]"));
+  const panel = document.getElementById("tpanel");
+  const hint = document.getElementById("thint");
+
+  function clear() {
+    steps.forEach(li => {
+      li.classList.remove("t-pass", "t-exit", "t-skip");
+      const n = li.querySelector(".trace-note"); n.hidden = true; n.textContent = "";
+    });
+    buttons.forEach(b => b.setAttribute("aria-pressed", "false"));
+    panel.hidden = true; hint.hidden = false;
+  }
+
+  function show(i) {
+    clear();
+    const t = TRACES[i];
+    buttons[i].setAttribute("aria-pressed", "true");
+    steps.forEach(li => {
+      const st = t.states[li.dataset.step];
+      if (!st) return;
+      li.classList.add("t-" + st[0]);
+      const n = li.querySelector(".trace-note"); n.textContent = st[1]; n.hidden = false;
+    });
+    document.getElementById("tticket").textContent = "“" + t.ticket + "”";
+    document.getElementById("tresult").textContent = t.result;
+    document.getElementById("tcost").textContent = t.cost;
+    document.getElementById("tsource").textContent = "Fuente: " + t.source;
+    panel.hidden = false; hint.hidden = true;
+  }
+
+  buttons.forEach(b => b.addEventListener("click", () => show(Number(b.dataset.trace))));
+  document.getElementById("tclear").addEventListener("click", clear);
+})();
+</script>
